@@ -1,0 +1,5 @@
+-- database: ./studentcheck.db
+
+delete FROM enrolments;
+
+DELETE FROM SQLITE_SEQUENCE WHERE name='enrolments';

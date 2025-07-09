@@ -1,0 +1,23 @@
+#####
+# @name cycle_names
+GET http://127.0.0.1:8000/cycles
+Content-Type: application/json
+
+#######
+# @name enrolment_check
+POST http://127.0.0.1:8000/enrolment-check
+Content-Type: application/json
+
+{
+    "collegeid": "1",
+    "idnr": "7108035256084",
+    "cycle_name": "2025 - Annual",
+    "programme_code": "50203060",
+    "enrolled": "NO"
+}
+
+#######
+# @name get_colleges
+
+GET http://127.0.0.1:8000/colleges
+Content-Type: application/json
