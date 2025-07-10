@@ -89,6 +89,26 @@ async def enrolment_check(
     gmt_plus_2 = timezone(timedelta(hours=2))
     now = datetime.now(gmt_plus_2).isoformat()
 
+    # Check for duplicate enrolment at another college
+    duplicate_query = (
+        select(
+            Colleges.college_name,
+            Enrolments.idnr,
+            CyclesFact.cycle_name,
+            Enrolments.programme_code,
+            Enrolments.enrolled
+        )
+        .join(CyclesFact, Enrolments.cycleid == CyclesFact.cycleid)
+        .join(Colleges, Colleges.collegeid == Enrolments.collegeid)
+        .where(
+            (Enrolments.idnr == data.idnr) &
+            (Enrolments.collegeid != data.collegeid) &
+            (Enrolments.enrolled == 1)
+        )
+    )
+    duplicates = session.exec(duplicate_query).all()
+    duplicated = len(duplicates) > 0
+
     if enrolment:
         # Update enrolled field and timestamp
         enrolment.enrolled = enrolled_value
@@ -96,11 +116,15 @@ async def enrolment_check(
         session.add(enrolment)
         session.commit()
         session.refresh(enrolment)
-        # Respond with cycle_name instead of cycleid
         enrolment_dict = enrolment.dict()
         enrolment_dict["cycle_name"] = cycle.cycle_name
         enrolment_dict.pop("cycleid", None)
-        return {"exists": True, "enrolment": enrolment_dict}
+        return {
+            "exists": True,
+            "enrolment": enrolment_dict,
+            "duplicated": duplicated,
+            "duplicates": [dict(zip(["college_name", "idnr", "cycle_name", "programme_code", "enrolled"], d)) for d in duplicates]
+        }
     else:
         # Insert new enrolment with timestamp
         new_enrolment = Enrolments(
@@ -114,7 +138,12 @@ async def enrolment_check(
         session.add(new_enrolment)
         session.commit()
         session.refresh(new_enrolment)
-        return {"exists": False, "enrolment": new_enrolment}
+        return {
+            "exists": False,
+            "enrolment": new_enrolment,
+            "duplicated": duplicated,
+            "duplicates": [dict(zip(["college_name", "idnr", "cycle_name", "programme_code", "enrolled"], d)) for d in duplicates]
+        }
 
 @app.get("/colleges", response_model=list[CollegeOut])
 async def list_colleges(session: SessionDep):
