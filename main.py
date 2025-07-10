@@ -1,4 +1,5 @@
 from typing import Annotated
+from datetime import datetime, timedelta, timezone
 
 from fastapi import Body, Depends, FastAPI, HTTPException, Query
 from sqlmodel import Field, Session, SQLModel, create_engine, select
@@ -27,6 +28,7 @@ class Enrolments(SQLModel, table=True):
     cycleid: int
     programme_code: str
     enrolled: int
+    timestamp: str  # New field for timestamp
 
 class Colleges(SQLModel, table=True):
     collegeid: int = Field(default=None, primary_key=True)
@@ -84,22 +86,30 @@ async def enrolment_check(
     ).first()
 
     enrolled_value = 1 if data.enrolled.lower() == "yes" else 0
+    gmt_plus_2 = timezone(timedelta(hours=2))
+    now = datetime.now(gmt_plus_2).isoformat()
 
     if enrolment:
-        # Update enrolled field
+        # Update enrolled field and timestamp
         enrolment.enrolled = enrolled_value
+        enrolment.timestamp = now
         session.add(enrolment)
         session.commit()
         session.refresh(enrolment)
-        return {"exists": True, "enrolment": enrolment}
+        # Respond with cycle_name instead of cycleid
+        enrolment_dict = enrolment.dict()
+        enrolment_dict["cycle_name"] = cycle.cycle_name
+        enrolment_dict.pop("cycleid", None)
+        return {"exists": True, "enrolment": enrolment_dict}
     else:
-        # Insert new enrolment
+        # Insert new enrolment with timestamp
         new_enrolment = Enrolments(
             collegeid=data.collegeid,
             idnr=data.idnr,
             cycleid=cycle.cycleid,
             programme_code=data.programme_code,
-            enrolled=enrolled_value
+            enrolled=enrolled_value,
+            timestamp=now
         )
         session.add(new_enrolment)
         session.commit()
