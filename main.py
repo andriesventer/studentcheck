@@ -56,7 +56,7 @@ def get_session():
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
-app = FastAPI()
+app = FastAPI(docs_url=None)
 
 @app.get("/cycles", response_model=list[CycleOut])
 async def read_cycles(session: SessionDep):
@@ -73,7 +73,9 @@ async def enrolment_check(
         select(CyclesFact).where(CyclesFact.cycle_name == data.cycle_name)
     ).first()
     if not cycle:
-        return {"exists": False, "reason": "Cycle not found"}
+        return {
+            "status": "Error -Cycle not found"
+        }
 
     # Check if enrolment exists (now includes collegeid)
     enrolment = session.exec(
@@ -120,7 +122,7 @@ async def enrolment_check(
         enrolment_dict["cycle_name"] = cycle.cycle_name
         enrolment_dict.pop("cycleid", None)
         return {
-            "exists": True,
+            "status": "Updated",
             "enrolment": enrolment_dict,
             "duplicated": duplicated,
             "duplicates": [dict(zip(["college_name", "idnr", "cycle_name", "programme_code", "enrolled"], d)) for d in duplicates]
@@ -139,7 +141,7 @@ async def enrolment_check(
         session.commit()
         session.refresh(new_enrolment)
         return {
-            "exists": False,
+            "status": "Added",
             "enrolment": new_enrolment,
             "duplicated": duplicated,
             "duplicates": [dict(zip(["college_name", "idnr", "cycle_name", "programme_code", "enrolled"], d)) for d in duplicates]
