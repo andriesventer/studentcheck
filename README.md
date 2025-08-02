@@ -30,6 +30,15 @@ Checks and updates a student's enrolment.
 ```
 
 **Response:**
+If cycle not found:
+```json
+{
+  "error": true,
+  "reason": "Cycle not found"
+}
+```
+
+If successful
 ```json
 {
   "status": "Added" | "Updated",
