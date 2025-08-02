@@ -51,9 +51,10 @@ Content-Type: application/json
 # @name enrolment_check2
 POST https://studdup.tvet.org.za/enrolment-check
 Content-Type: application/json
+X-API-Key: 6RDGH9fMHHTvCiQbmBKRnat77Y49vS0p
 
 {
-    "collegeid": "1",
+
     "idnr": "0401175048563",
     "cycle_name": "2025 - Annual",
     "programme_code": "50203060",
