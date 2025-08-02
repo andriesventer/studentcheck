@@ -1,0 +1,50 @@
+1|Boland TVET College|6RDGH9fMHHTvCiQbmBKRnat77Y49vS0p
+2|Buffalo City TVET College|WQzClfZ8GbXyY4v7O13LB3g2q0iVvcdb
+3|Capricorn TVET College|ub9q4TjteXiFPl5Y4olcQELjub9pVwSd
+4|Central Johannesburg TVET College|5HuI73vhFtHCo52neaMFJCm9qQFcvPv4
+5|Coastal TVET College|UjWmcttALKvqi27Vfv5mymGS05r9qV6j
+6|College of Cape Town for TVET|Een6ySLt20yQQMTDcSvYN0t1hQnyaa5o
+7|Eastcape Midlands TVET College|XPJzJvSltXeoPGiyYvwGvopqqTUfk6RO
+8|Ehlanzeni TVET College|Jggxu9XsJSVfTt8vnoqCS9DwT0eTN2Jj
+9|Ekurhuleni East TVET College|wiLUUsws5XyD9Hsv7QEjRxp2W5GTK04b
+10|Ekurhuleni West TVET College|dkWl7a1GWyLlHMklpO5hl9ZO3Q9ugUbw
+11|Elangeni TVET College|L64SWfRZbGuO0jPegxHGp01FIrXDhAlh
+12|Esayidi TVET College|bjQSzk6Jby127CmmEvsDjtaXndzuXaKk
+13|False Bay TVET College|2444EfAlQo7FwNqvz2j9ziGZK99GbXxc
+14|Flavius Mareka TVET College|MrpNsijS74kDWsNT2ObrV9hRtB8t73TC
+15|Gert Sibande TVET College|oIDvIH9ouFsMbN62I44IKx7vxpO9cWDU
+16|Goldfields TVET College|1fpW8oXhLm0992KLPnWikS24PFIOQq3o
+17|Ikhala TVET College|4arvvshaVJobKxjm3WZAtV4Jru8yd8wQ
+18|Ingwe TVET College|pEXCgyVulFSspJGvs3ulrJwIECEjC1CQ
+19|King Hintsa TVET College|fUAxdO3OKE3lMymqN3nwrp0mOY9x6BzD
+20|King Sabata Dalindyebo TVET College|gwkor6W9Blqhhj0Ry6sMWtp2sgp8rZ4c
+21|Lephalale TVET College|w8E41nhLxQpBdUva1xENDa2qTgvDgeWW
+22|Letaba TVET College|WKL5jrz19JomNiXWD30wlieOMnk51Mq6
+23|Lovedale TVET College|0YybeOGYZlCNrwyeHNKYiMrj0miqOVnL
+24|Majuba TVET College|LWJvIgSOtSWoOixl5zA5Z9RocXSh5LJh
+25|Maluti TVET College|NvOVJFMwRebZRnryXpVGWU5z4zW3hoS8
+26|Mnambithi TVET College|LzGETdhAvIX7Cfg1q0tPDhNPsm2F2b2h
+27|Mopani TVET College|0Nk0G9LxrPcdxu00uYpgGXNDPpoBlGdl
+28|Motheo TVET College|HxEBXm8dcoQUgr0wXrUIZBNM9mgxZKmU
+29|Mthashana TVET College|KVhm2gXzXtEruU21zTO8wc45klxNxBT8
+30|Nkangala TVET College|XO7u7fC36b9O1uldLbRj2oPnDwt4s2Bv
+31|Northern Cape Rural TVET College|h5lSYnYaLv2KPNAJrFEtN9SG0sn8Hehj
+32|Northern Cape Urban TVET College|kEJAUGy2Q2n3jqqb5p2QmPpiqfHCGWzT
+33|Northlink TVET College|pH0loubW0CFkcv6H8WjudCbrK4q0B1TK
+34|Orbit TVET College|X4iVe9qv5CTpO5wGlzvLF0fFmw4ySxl7
+35|Port Elizabeth TVET College|CujJViInuqXlIKAixUKFffTu3U5AZ4aa
+36|Sedibeng TVET College|Zjd4bItkGVVyTgsxlmZgRz2uVxLWyIi8
+37|Sekhukhune TVET College|Fxw67eXwdbCGa33fxQ2RO33LMMs0V78V
+38|South Cape TVET College|EXhJxJKiLglTNEemCUq20ckSS9xmVBq4
+39|South West Gauteng TVET College|OZEuZLZvg1XzjcuqgzXIAQmBjVZPDEqX
+40|Taletso TVET College|NiIbivUQp40ZGnItqmbxBIDwO0Fw9aCI
+41|Thekwini TVET College|9RvI4bhuAJC6M46g0il87t2QWWEut4nV
+42|Tshwane North TVET College|thHfS77V8I2QOwzfdWO8mrM0tKaf0wFL
+43|Tshwane South TVET College|Wk2Ef1bKKWU2R3e20m6vwf56Ei2Yn7kR
+44|Umfolozi TVET College|X94nYQPAPuBQ3Wq75gABZfPHYxOq0WnR
+45|Umgungundlovu TVET College|YRSRs6I6NADfc3fO4qQ6BwGkK5DyhcUt
+46|Vhembe TVET College|mglSViwS6KC45Qi1LIW8VBisQC4XzbUr
+47|Vuselela TVET College|PwvRDJ3CrbhfwPYiH6RxUwOjlAnVS3rw
+48|Waterberg TVET College|FFkJ2CbTkxy3Wkm3e57fSvS8fnHIl6tz
+49|West Coast TVET College|774sadWNyoJrgO9JWAJ4HnsoKiBNkJoR
+50|Western TVET College|Yo2CFWRPJLJoGKWCQZ8NaQLgFSceHIXO

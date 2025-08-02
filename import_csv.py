@@ -2,8 +2,10 @@ import requests
 
 collegeid="1"
 
+
+
 def enrolment_check(collegeid,cycle_name, idnr, programme_code, enrolled):
-    url = "http://localhost:8000/enrolment-check"
+    url = "https://studdup.tvet.org.za/enrolment-check"
     payload = {
         "cycle_name": cycle_name,
         "idnr": idnr,
@@ -12,12 +14,17 @@ def enrolment_check(collegeid,cycle_name, idnr, programme_code, enrolled):
         "collegeid": collegeid
     }
     response = requests.post(url, json=payload)
-    return response.json()
+    if response.status_code == 200:
+        data = response.json()
+        return data['status'], data['duplicates']
+           
 
-with open('export.csv', 'r') as f:
+with open('export.csv', 'r') as f,open('results.txt', 'w') as results_file:
     lines = f.readlines()
     # Assuming the first line contains the header
     header = lines[0].strip().split(',')
+    # Write the header to the results file
+    results_file.write(f"IdNr,Cycle,ProgrammeCode, Enrolled,Result,Duplicated\n")
     # Assuming the second line contains the data
     for line in lines[1:]:
         data = line.strip().split(',')
@@ -26,7 +33,15 @@ with open('export.csv', 'r') as f:
         programme_code = data[2]
         enrolled = data[3]
         result = enrolment_check(collegeid,cycle_name, idnr, programme_code, enrolled)
-        print(result)
+        # Write the result to the file
+        if not result:
+            result ="Error - No response from server"
+        elif isinstance(result, tuple):
+            result, duplicates = result
+        
+        print(f"IDNR: {idnr}, Cycle: {cycle_name}, Programme Code: {programme_code}, Enrolled: {enrolled} ,Result: {result}, Duplicated: {duplicates if len(duplicates)>0 else 'N/A'}")
+        results_file.write(f"{idnr},{cycle_name},{programme_code},{enrolled},{result},{duplicates if len(duplicates)>0 else 'N/A'}\n")
+        
         
         
 
