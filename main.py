@@ -2,6 +2,7 @@ from typing import Annotated
 from datetime import datetime, timedelta, timezone
 
 from fastapi import Body, Depends, FastAPI, Header, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 from pydantic import BaseModel
 
@@ -109,6 +110,14 @@ def get_session():
 SessionDep = Annotated[Session, Depends(get_session)]
 
 app = FastAPI(docs_url=None)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Or specify ["http://localhost:5500"] for Live Server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/cycles", response_model=list[CycleOut])
 async def read_cycles(session: SessionDep):

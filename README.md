@@ -30,6 +30,7 @@ Checks and updates a student's enrolment.
 ```
 
 **Response:**
+
 If cycle not found:
 ```json
 {
