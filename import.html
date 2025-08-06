@@ -54,19 +54,70 @@
         .results {
             margin-top: 32px;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 16px;
+        .progress-container {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 24px;
+            margin-top: 20px;
         }
-        th, td {
-            padding: 10px;
-            border-bottom: 1px solid #e2e8f0;
-            text-align: left;
+        .progress-bar-wrapper {
+            background: #e2e8f0;
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+            margin: 16px 0;
         }
-        th {
-            background: #f1f5f9;
+        .progress-bar {
+            background: linear-gradient(90deg, #3182ce, #2563eb);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+        .progress-text {
+            text-align: center;
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+        .progress-details {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #718096;
+        }
+        .summary {
+            background: #f0fff4;
+            border: 1px solid #9ae6b4;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .summary h3 {
             color: #2d3748;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 12px;
+            background: #fff;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-top: 4px;
         }
         .error {
             color: #e53e3e;
@@ -76,6 +127,55 @@
             color: #38a169;
             font-weight: 500;
         }
+        .duplicates-section {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .duplicates-section h3 {
+            color: #c53030;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+        .duplicates-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 0.9rem;
+        }
+        .duplicates-table th,
+        .duplicates-table td {
+            border: 1px solid #e2e8f0;
+            padding: 8px;
+            text-align: left;
+        }
+        .duplicates-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        .duplicates-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        .download-btn {
+            background: #38a169;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 16px;
+            font-size: 0.9rem;
+        }
+        .download-btn:hover {
+            background: #2f855a;
+        }
+        .download-btn:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
         @media (max-width: 600px) {
             .container {
                 padding: 16px 8px;
@@ -83,13 +183,20 @@
             th, td {
                 padding: 6px;
             }
+            .duplicates-table {
+                font-size: 0.8rem;
+            }
+            .duplicates-table th,
+            .duplicates-table td {
+                padding: 4px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Student Enrolment Import</h1>
-        <form id="importForm">
+        <form id="importForm" onsubmit="return false;">
             <label for="apiKey">API Key</label>
             <input type="text" id="apiKey" name="apiKey" placeholder="Enter your college API key" required>
             
@@ -105,13 +212,73 @@
         // Helper to parse CSV
         function parseCSV(text) {
             const lines = text.trim().split('\n');
-            const header = lines[0].split(',').map(h => h.trim());
+            const header = lines[0].split(',').map(h => h.trim().toLowerCase());
+            const requiredHeaders = ["cycle", "idnr", "programme_code", "enrolled"];
+            // Check header validity
+            for (let h of requiredHeaders) {
+                if (!header.includes(h)) {
+                    throw new Error(`CSV header missing required field: "${h}". Required headers are: cycle,idnr,programme_code,enrolled`);
+                }
+            }
             return lines.slice(1).map(line => {
                 const values = line.split(',').map(v => v.trim());
                 let obj = {};
                 header.forEach((h, i) => obj[h] = values[i]);
                 return obj;
             });
+        }
+
+        // Generate unique session ID
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Get college name from API key
+        async function getCollegeName(apiKey) {
+            try {
+                const response = await fetch('https://studdup.tvet.org.za/college', {
+                //const response = await fetch('http://127.0.0.1:8000/college', {
+                    headers: {
+                        'X-API-Key': apiKey
+                    }
+                });
+                if (response.ok) {
+                    const college = await response.json();
+                    return college.college_name || "Current College";
+                }
+            } catch (error) {
+                console.error('Error fetching college name:', error);
+            }
+            return "Current College";
+        }
+
+        // Download CSV function
+        async function downloadDuplicatesCSV(sessionId, apiKey) {
+            try {
+                const response = await fetch(`https://studdup.tvet.org.za/duplicates-csv?session_id=${sessionId}`, {
+                //const response = await fetch(`http://127.0.0.1:8000/duplicates-csv?session_id=${sessionId}`, {
+                    headers: {
+                        'X-API-Key': apiKey
+                    }
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `duplicate_records_${new Date().toISOString().slice(0,10)}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    alert('Failed to download CSV file');
+                }
+            } catch (error) {
+                console.error('Error downloading CSV:', error);
+                alert('Error downloading CSV file');
+            }
         }
 
         document.getElementById('importForm').addEventListener('submit', async function(e) {
@@ -131,31 +298,47 @@
             }
 
             const file = fileInput.files[0];
+            const sessionId = generateSessionId();
             const reader = new FileReader();
+            
             reader.onload = async function(event) {
                 const csvText = event.target.result;
                 let records;
                 try {
                     records = parseCSV(csvText);
-                } catch {
-                    resultsDiv.innerHTML = '<div class="error">Failed to parse CSV file.</div>';
+                } catch (err) {
+                    resultsDiv.innerHTML = `<div class="error">${err.message}</div>`;
                     return;
                 }
 
-                // Show loading
-                resultsDiv.innerHTML = '<div>Processing records...</div>';
+                // Initialize progress tracking
+                const totalRecords = records.length;
+                let processedRecords = 0;
+                let successCount = 0;
+                let errorCount = 0;
+                let duplicateCount = 0;
+                let allDuplicateRecords = [];
 
-                // Table header
-                let tableHTML = `<table>
-                    <tr>
-                        <th>IdNr</th>
-                        <th>Cycle</th>
-                        <th>ProgrammeCode</th>
-                        <th>Enrolled</th>
-                        <th>Status</th>
-                        <th>Duplicated</th>
-                    </tr>`;
+                // Show progress bar
+                resultsDiv.innerHTML = `
+                    <div class="progress-container">
+                        <div class="progress-text">Processing Records...</div>
+                        <div class="progress-bar-wrapper">
+                            <div class="progress-bar" id="progressBar"></div>
+                        </div>
+                        <div class="progress-details" id="progressDetails">
+                            Processing record 0 of ${totalRecords}
+                        </div>
+                    </div>
+                `;
 
+                const progressBar = document.getElementById('progressBar');
+                const progressDetails = document.getElementById('progressDetails');
+
+                // Get college name once at the beginning
+                const currentCollegeName = await getCollegeName(apiKey);
+
+                let recordNumber = 1;
                 for (const rec of records) {
                     // Prepare payload
                     const payload = {
@@ -165,11 +348,9 @@
                         enrolled: rec.enrolled || rec.Enrolled || rec.enrolment || rec.Enrolment
                     };
 
-                    let status = '';
-                    let duplicated = '';
-                    let rowClass = '';
                     try {
                         const response = await fetch('https://studdup.tvet.org.za/enrolment-check', {
+                        //const response = await fetch('http://127.0.0.1:8000/enrolment-check', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -177,33 +358,122 @@
                             },
                             body: JSON.stringify(payload)
                         });
+                        
                         if (response.ok) {
                             const data = await response.json();
-                            status = data.status || (data.error ? 'Error' : 'Unknown');
-                            duplicated = (data.duplicated ? 'Yes' : 'No');
-                            rowClass = data.duplicated ? 'error' : 'success';
+                            if (data.duplicated && data.duplicates && data.duplicates.length > 0) {
+                                duplicateCount++;
+                                // Collect duplicate records
+                                data.duplicates.forEach(duplicate => {
+                                    allDuplicateRecords.push({
+                                        student_idnr: payload.idnr,
+                                        current_college: currentCollegeName,
+                                        conflicting_college: duplicate.college_name,
+                                        cycle_name: duplicate.cycle_name,
+                                        programme_code: duplicate.programme_code,
+                                        enrolled_status: duplicate.enrolled === 1 ? 'Yes' : 'No',
+                                        timestamp: new Date().toISOString()
+                                    });
+                                });
+                            } else {
+                                successCount++;
+                            }
                         } else {
-                            status = 'HTTP ' + response.status;
-                            duplicated = 'N/A';
-                            rowClass = 'error';
+                            errorCount++;
                         }
                     } catch (err) {
-                        status = 'Network Error';
-                        duplicated = 'N/A';
-                        rowClass = 'error';
+                        errorCount++;
                     }
 
-                    tableHTML += `<tr class="${rowClass}">
-                        <td>${payload.idnr || ''}</td>
-                        <td>${payload.cycle_name || ''}</td>
-                        <td>${payload.programme_code || ''}</td>
-                        <td>${payload.enrolled || ''}</td>
-                        <td>${status}</td>
-                        <td>${duplicated}</td>
-                    </tr>`;
+                    // Update progress
+                    processedRecords++;
+                    const progressPercent = (processedRecords / totalRecords) * 100;
+                    progressBar.style.width = progressPercent + '%';
+                    progressDetails.textContent = `Processing record ${processedRecords} of ${totalRecords}`;
+                    
+                    recordNumber++;
                 }
-                tableHTML += '</table>';
-                resultsDiv.innerHTML = tableHTML;
+
+                // Store duplicate records on the server
+                if (allDuplicateRecords.length > 0) {
+                    try {
+                        await fetch(`https://studdup.tvet.org.za/store-duplicates?session_id=${sessionId}`, {
+                        //await fetch(`http://127.0.0.1:8000/store-duplicates?session_id=${sessionId}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-API-Key': apiKey
+                            },
+                            body: JSON.stringify(allDuplicateRecords)
+                        });
+                    } catch (error) {
+                        console.error('Error storing duplicates:', error);
+                    }
+                }
+
+                // Build duplicates table HTML
+                let duplicatesTableHTML = '';
+                if (allDuplicateRecords.length > 0) {
+                    duplicatesTableHTML = `
+                        <div class="duplicates-section">
+                            <h3>⚠️ Duplicate Records Found (${allDuplicateRecords.length})</h3>
+                            <p>The following students are already enrolled at other colleges:</p>
+                            <table class="duplicates-table">
+                                <thead>
+                                    <tr>
+                                        <th>Student ID</th>
+                                        <th>Current College</th>
+                                        <th>Conflicting College</th>
+                                        <th>Cycle</th>
+                                        <th>Programme Code</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${allDuplicateRecords.map(dup => `
+                                        <tr>
+                                            <td>${dup.student_idnr}</td>
+                                            <td>${dup.current_college}</td>
+                                            <td>${dup.conflicting_college}</td>
+                                            <td>${dup.cycle_name}</td>
+                                            <td>${dup.programme_code}</td>
+                                            <td>${dup.enrolled_status}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                            <button class="download-btn" onclick="downloadDuplicatesCSV('${sessionId}', '${apiKey}')">
+                                📥 Download Duplicates Report (CSV)
+                            </button>
+                        </div>
+                    `;
+                }
+
+                // Show completion summary with duplicates table
+                resultsDiv.innerHTML = `
+                    <div class="summary">
+                        <h3>Import Complete!</h3>
+                        <div class="summary-stats">
+                            <div class="stat-item">
+                                <div class="stat-value">${totalRecords}</div>
+                                <div class="stat-label">Total Records</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value success">${successCount}</div>
+                                <div class="stat-label">Successful</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value error">${duplicateCount}</div>
+                                <div class="stat-label">Duplicates</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value error">${errorCount}</div>
+                                <div class="stat-label">Errors</div>
+                            </div>
+                        </div>
+                    </div>
+                    ${duplicatesTableHTML}
+                `;
             };
             reader.readAsText(file);
         });

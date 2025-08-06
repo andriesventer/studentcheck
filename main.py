@@ -1,8 +1,11 @@
 from typing import Annotated
 from datetime import datetime, timedelta, timezone
+import csv
+import io
 
 from fastapi import Body, Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse, HTMLResponse
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 from pydantic import BaseModel
 
@@ -86,10 +89,24 @@ class Enrolments(SQLModel, table=True):
 class Colleges(SQLModel, table=True):
     collegeid: int = Field(default=None, primary_key=True)
     college_name: str
+    api_key: str
 
 class CollegeOut(BaseModel):
     collegeid: int
     college_name: str
+    api_key: str
+
+class DuplicateRecord(BaseModel):
+    student_idnr: str
+    current_college: str
+    conflicting_college: str
+    cycle_name: str
+    programme_code: str
+    enrolled_status: str
+    timestamp: str
+
+# In-memory storage for duplicate records during import sessions
+duplicate_records_storage = {}
 
 sqlite_file_name = "studentcheck.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
@@ -118,6 +135,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    """Serve the import.html file at the root URL"""
+    with open("import.html", "r", encoding="utf-8") as file:
+        html_content = file.read()
+    return HTMLResponse(content=html_content)
 
 @app.get("/cycles", response_model=list[CycleOut])
 async def read_cycles(session: SessionDep):
@@ -225,6 +249,93 @@ async def list_colleges(session: SessionDep):
     results = session.exec(select(Colleges)).all()
     return results
 
+@app.get("/college")
+async def get_current_college(
+    session: SessionDep,
+    api_key: str = Depends(get_api_key)
+):
+    """Get college information for the authenticated user"""
+    collegeid = int(api_keys[api_key])
+    college = session.exec(
+        select(Colleges).where(Colleges.collegeid == collegeid)
+    ).first()
+    
+    if not college:
+        raise HTTPException(status_code=404, detail="College not found")
+    
+    return {
+        "collegeid": college.collegeid,
+        "college_name": college.college_name
+        # Note: We don't return the API key for security
+    }
 
+@app.post("/store-duplicates")
+async def store_duplicates(
+    session_id: str = Query(...),
+    duplicates: list[DuplicateRecord] = Body(...),
+    api_key: str = Depends(get_api_key)
+):
+    """Store duplicate records for a session"""
+    duplicate_records_storage[session_id] = duplicates
+    return {"status": "success", "stored_count": len(duplicates)}
 
+@app.get("/duplicates-csv")
+async def export_duplicates_csv(
+    session_id: str = Query(...),
+    api_key: str = Depends(get_api_key)
+):
+    """Export duplicate records as CSV"""
+    if session_id not in duplicate_records_storage:
+        raise HTTPException(status_code=404, detail="No duplicate records found for this session")
+    
+    duplicates = duplicate_records_storage[session_id]
+    
+    # Create CSV content
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow([
+        "Student ID Number",
+        "Current College",
+        "Conflicting College",
+        "Cycle Name",
+        "Programme Code",
+        "Enrollment Status",
+        "Timestamp"
+    ])
+    
+    # Write data rows
+    for duplicate in duplicates:
+        writer.writerow([
+            duplicate.student_idnr,
+            duplicate.current_college,
+            duplicate.conflicting_college,
+            duplicate.cycle_name,
+            duplicate.programme_code,
+            duplicate.enrolled_status,
+            duplicate.timestamp
+        ])
+    
+    output.seek(0)
+    
+    # Generate filename with timestamp
+    now = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"duplicate_records_{now}.csv"
+    
+    return StreamingResponse(
+        io.BytesIO(output.getvalue().encode('utf-8')),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
 
+@app.get("/duplicates")
+async def get_duplicates(
+    session_id: str = Query(...),
+    api_key: str = Depends(get_api_key)
+):
+    """Get duplicate records for a session"""
+    if session_id not in duplicate_records_storage:
+        return {"duplicates": []}
+    
+    return {"duplicates": duplicate_records_storage[session_id]}
