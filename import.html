@@ -139,6 +139,38 @@
             margin-top: 0;
             margin-bottom: 16px;
         }
+        .errors-section {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .errors-section h3 {
+            color: #c53030;
+            margin-top: 0;
+            margin-bottom: 16px;
+        }
+        .errors-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+            font-size: 0.9rem;
+        }
+        .errors-table th,
+        .errors-table td {
+            border: 1px solid #e2e8f0;
+            padding: 8px;
+            text-align: left;
+        }
+        .errors-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        .errors-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
         .duplicates-table {
             width: 100%;
             border-collapse: collapse;
@@ -236,8 +268,8 @@
         // Get college name from API key
         async function getCollegeName(apiKey) {
             try {
-                const response = await fetch('https://studdup.tvet.org.za/college', {
-                //const response = await fetch('http://127.0.0.1:8000/college', {
+                //const response = await fetch('https://studdup.tvet.org.za/college', {
+                const response = await fetch('http://127.0.0.1:8000/college', {
                     headers: {
                         'X-API-Key': apiKey
                     }
@@ -318,6 +350,7 @@
                 let errorCount = 0;
                 let duplicateCount = 0;
                 let allDuplicateRecords = [];
+                let allErrorRecords = [];
 
                 // Show progress bar
                 resultsDiv.innerHTML = `
@@ -361,7 +394,18 @@
                         
                         if (response.ok) {
                             const data = await response.json();
-                            if (data.duplicated && data.duplicates && data.duplicates.length > 0) {
+                            if (data.error) {
+                                // Handle API error response
+                                errorCount++;
+                                allErrorRecords.push({
+                                    student_idnr: payload.idnr,
+                                    cycle_name: payload.cycle_name,
+                                    programme_code: payload.programme_code,
+                                    enrolled: payload.enrolled,
+                                    error_reason: data.reason || 'Unknown error',
+                                    record_number: recordNumber
+                                });
+                            } else if (data.duplicated && data.duplicates && data.duplicates.length > 0) {
                                 duplicateCount++;
                                 // Collect duplicate records
                                 data.duplicates.forEach(duplicate => {
@@ -379,10 +423,39 @@
                                 successCount++;
                             }
                         } else {
+                            // Handle HTTP error responses
                             errorCount++;
+                            try {
+                                const errorData = await response.json();
+                                allErrorRecords.push({
+                                    student_idnr: payload.idnr,
+                                    cycle_name: payload.cycle_name,
+                                    programme_code: payload.programme_code,
+                                    enrolled: payload.enrolled,
+                                    error_reason: errorData.reason || `HTTP ${response.status}: ${response.statusText}`,
+                                    record_number: recordNumber
+                                });
+                            } catch {
+                                allErrorRecords.push({
+                                    student_idnr: payload.idnr,
+                                    cycle_name: payload.cycle_name,
+                                    programme_code: payload.programme_code,
+                                    enrolled: payload.enrolled,
+                                    error_reason: `HTTP ${response.status}: ${response.statusText}`,
+                                    record_number: recordNumber
+                                });
+                            }
                         }
                     } catch (err) {
                         errorCount++;
+                        allErrorRecords.push({
+                            student_idnr: payload.idnr,
+                            cycle_name: payload.cycle_name,
+                            programme_code: payload.programme_code,
+                            enrolled: payload.enrolled,
+                            error_reason: `Network error: ${err.message}`,
+                            record_number: recordNumber
+                        });
                     }
 
                     // Update progress
@@ -449,7 +522,42 @@
                     `;
                 }
 
-                // Show completion summary with duplicates table
+                // Build errors table HTML
+                let errorsTableHTML = '';
+                if (allErrorRecords.length > 0) {
+                    errorsTableHTML = `
+                        <div class="errors-section">
+                            <h3>❌ Processing Errors Found (${allErrorRecords.length})</h3>
+                            <p>The following records encountered errors during processing:</p>
+                            <table class="errors-table">
+                                <thead>
+                                    <tr>
+                                        <th>Record #</th>
+                                        <th>Student ID</th>
+                                        <th>Cycle</th>
+                                        <th>Programme Code</th>
+                                        <th>Enrolled</th>
+                                        <th>Error Reason</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${allErrorRecords.map(err => `
+                                        <tr>
+                                            <td>${err.record_number}</td>
+                                            <td>${err.student_idnr}</td>
+                                            <td>${err.cycle_name}</td>
+                                            <td>${err.programme_code}</td>
+                                            <td>${err.enrolled}</td>
+                                            <td>${err.error_reason}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+
+                // Show completion summary with duplicates and errors tables
                 resultsDiv.innerHTML = `
                     <div class="summary">
                         <h3>Import Complete!</h3>
@@ -473,6 +581,7 @@
                         </div>
                     </div>
                     ${duplicatesTableHTML}
+                    ${errorsTableHTML}
                 `;
             };
             reader.readAsText(file);
