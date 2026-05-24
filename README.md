@@ -27,7 +27,7 @@ Upserts a student enrolment and checks for cross-college duplicates.
   "idnr": "0401175048563",
   "cycle_startdate": "2025-01-01",
   "cycle_enddate": "2025-12-31",
-  "saqa_id": "50203060",
+  "saqa_id": "90772",
   "enrolled": "yes"
 }
 ```
