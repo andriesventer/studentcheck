@@ -27,7 +27,7 @@ The `/enrolment-check` endpoint queries for other colleges where:
 
 Required headers:
 ```csv
-cycle_startdate,cycle_enddate,idnr,programme_code,enrolled
+cycle_startdate,cycle_enddate,idnr,saqa_id,enrolled
 2025-01-01,2025-12-31,0401175048563,50203060,yes
 ```
 
@@ -39,7 +39,7 @@ Stores duplicate records in memory keyed by session ID. Data is lost on server r
 ### `GET /duplicates-csv?session_id=<id>`
 Returns stored duplicates as a downloadable CSV with these columns:
 ```
-Student ID Number, Current College, Conflicting College, Cycle Start Date, Cycle End Date, Programme Code, Enrollment Status, Timestamp
+Student ID Number, Current College, Conflicting College, Cycle Start Date, Cycle End Date, SAQA ID, Enrollment Status, Timestamp
 ```
 
 ### `GET /duplicates?session_id=<id>`

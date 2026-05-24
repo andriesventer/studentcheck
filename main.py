@@ -14,7 +14,7 @@ class EnrolmentCheckIn(BaseModel):
     idnr: str
     cycle_startdate: str
     cycle_enddate: str
-    programme_code: str
+    saqa_id: str
     enrolled: str
 
 class Enrolments(SQLModel, table=True):
@@ -23,7 +23,7 @@ class Enrolments(SQLModel, table=True):
     idnr: str
     cycle_startdate: str
     cycle_enddate: str
-    programme_code: str
+    saqa_id: str
     enrolled: int
     timestamp: str
 
@@ -42,7 +42,7 @@ class DuplicateRecord(BaseModel):
     conflicting_college: str
     cycle_startdate: str
     cycle_enddate: str
-    programme_code: str
+    saqa_id: str
     enrolled_status: str
     timestamp: str
 
@@ -74,7 +74,7 @@ def create_indexes():
         ))
         conn.execute(text(
             "CREATE INDEX IF NOT EXISTS idx_enrolments_upsert "
-            "ON enrolments (collegeid, idnr, cycle_startdate, cycle_enddate, programme_code)"
+            "ON enrolments (collegeid, idnr, cycle_startdate, cycle_enddate, saqa_id)"
         ))
         conn.execute(text(
             "CREATE INDEX IF NOT EXISTS idx_colleges_api_key "
@@ -173,7 +173,7 @@ async def enrolment_check(
             (Enrolments.idnr == data.idnr) &
             (Enrolments.cycle_startdate == data.cycle_startdate) &
             (Enrolments.cycle_enddate == data.cycle_enddate) &
-            (Enrolments.programme_code == data.programme_code)
+            (Enrolments.saqa_id == data.saqa_id)
         )
     ).first()
 
@@ -184,7 +184,7 @@ async def enrolment_check(
             Enrolments.idnr,
             Enrolments.cycle_startdate,
             Enrolments.cycle_enddate,
-            Enrolments.programme_code,
+            Enrolments.saqa_id,
             Enrolments.enrolled
         )
         .join(Colleges, Colleges.collegeid == Enrolments.collegeid)
@@ -209,7 +209,7 @@ async def enrolment_check(
             "status": "Updated",
             "enrolment": enrolment.dict(),
             "duplicated": duplicated,
-            "duplicates": [dict(zip(["college_name", "idnr", "cycle_startdate", "cycle_enddate", "programme_code", "enrolled"], d)) for d in duplicates]
+            "duplicates": [dict(zip(["college_name", "idnr", "cycle_startdate", "cycle_enddate", "saqa_id", "enrolled"], d)) for d in duplicates]
         }
     else:
         new_enrolment = Enrolments(
@@ -217,7 +217,7 @@ async def enrolment_check(
             idnr=data.idnr,
             cycle_startdate=data.cycle_startdate,
             cycle_enddate=data.cycle_enddate,
-            programme_code=data.programme_code,
+            saqa_id=data.saqa_id,
             enrolled=enrolled_value,
             timestamp=now
         )
@@ -228,7 +228,7 @@ async def enrolment_check(
             "status": "Added",
             "enrolment": new_enrolment,
             "duplicated": duplicated,
-            "duplicates": [dict(zip(["college_name", "idnr", "cycle_startdate", "cycle_enddate", "programme_code", "enrolled"], d)) for d in duplicates]
+            "duplicates": [dict(zip(["college_name", "idnr", "cycle_startdate", "cycle_enddate", "saqa_id", "enrolled"], d)) for d in duplicates]
         }
 
 @app.get("/colleges", response_model=list[CollegeOut])
@@ -287,7 +287,7 @@ async def export_duplicates_csv(
         "Conflicting College",
         "Cycle Start Date",
         "Cycle End Date",
-        "Programme Code",
+        "SAQA ID",
         "Enrollment Status",
         "Timestamp"
     ])
@@ -300,7 +300,7 @@ async def export_duplicates_csv(
             duplicate.conflicting_college,
             duplicate.cycle_startdate,
             duplicate.cycle_enddate,
-            duplicate.programme_code,
+            duplicate.saqa_id,
             duplicate.enrolled_status,
             duplicate.timestamp
         ])

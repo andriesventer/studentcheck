@@ -29,7 +29,7 @@ Single-file FastAPI backend (`main.py`) with a SQLite database (`studentcheck.db
 
 **Data model:**
 - `Colleges` — colleges with their API keys (50 colleges, seeded manually)
-- `Enrolments` — per-college student enrolment records, keyed by `(collegeid, idnr, cycle_startdate, cycle_enddate, programme_code)`
+- `Enrolments` — per-college student enrolment records, keyed by `(collegeid, idnr, cycle_startdate, cycle_enddate, saqa_id)`
 
 **Auth:** API key is looked up in the `Colleges` table via `GET /college` — no hardcoded dict. Every protected endpoint requires `X-API-Key` header. The resolved `collegeid` determines which college the request belongs to.
 
@@ -42,11 +42,11 @@ Single-file FastAPI backend (`main.py`) with a SQLite database (`studentcheck.db
 
 **Duplicate records feature:** `/store-duplicates` and `/duplicates-csv` endpoints let the frontend accumulate duplicate records during a bulk import session (keyed by `session_id` query param) and export them as CSV. Storage is in-memory (`duplicate_records_storage` dict) — lost on server restart.
 
-**`import.html`:** Standalone single-page UI that accepts an API key and CSV file, processes rows client-side by calling `/enrolment-check` sequentially, tracks progress, and surfaces duplicates and errors in separate tables after import. The production URL (`studdup.tvet.org.za`) is active; local dev URLs are commented out. CSV format: `cycle_startdate,cycle_enddate,idnr,programme_code,enrolled`.
+**`import.html`:** Standalone single-page UI that accepts an API key and CSV file, processes rows client-side by calling `/enrolment-check` sequentially, tracks progress, and surfaces duplicates and errors in separate tables after import. The production URL (`studdup.tvet.org.za`) is active; local dev URLs are commented out. CSV format: `cycle_startdate,cycle_enddate,idnr,saqa_id,enrolled`.
 
-**`import_csv.py`:** CLI script alternative to the UI — reads `export.csv` (columns: `cycle_startdate,cycle_enddate,idnr,programme_code,enrolled`), calls the production API endpoint, writes results to `results.txt`.
+**`import_csv.py`:** CLI script alternative to the UI — reads `export.csv` (columns: `cycle_startdate,cycle_enddate,idnr,saqa_id,enrolled`), calls the production API endpoint, writes results to `results.txt`.
 
-**Performance:** SQLite runs in WAL mode (`journal_mode=WAL`, `synchronous=NORMAL`) for concurrent read/write during bulk imports. Three indexes are created at startup: `(idnr, enrolled)` for the duplicate scan, `(collegeid, idnr, cycle_startdate, cycle_enddate, programme_code)` for upsert lookups, and `(api_key)` on `Colleges` for auth.
+**Performance:** SQLite runs in WAL mode (`journal_mode=WAL`, `synchronous=NORMAL`) for concurrent read/write during bulk imports. Three indexes are created at startup: `(idnr, enrolled)` for the duplicate scan, `(collegeid, idnr, cycle_startdate, cycle_enddate, saqa_id)` for upsert lookups, and `(api_key)` on `Colleges` for auth.
 
 ## Deployment
 

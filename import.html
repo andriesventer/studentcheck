@@ -245,11 +245,11 @@
         function parseCSV(text) {
             const lines = text.trim().split('\n');
             const header = lines[0].split(',').map(h => h.trim().toLowerCase());
-            const requiredHeaders = ["cycle_startdate", "cycle_enddate", "idnr", "programme_code", "enrolled"];
+            const requiredHeaders = ["cycle_startdate", "cycle_enddate", "idnr", "saqa_id", "enrolled"];
             // Check header validity
             for (let h of requiredHeaders) {
                 if (!header.includes(h)) {
-                    throw new Error(`CSV header missing required field: "${h}". Required headers are: cycle_startdate,cycle_enddate,idnr,programme_code,enrolled`);
+                    throw new Error(`CSV header missing required field: "${h}". Required headers are: cycle_startdate,cycle_enddate,idnr,saqa_id,enrolled`);
                 }
             }
             return lines.slice(1).map(line => {
@@ -378,7 +378,7 @@
                         idnr: rec.idnr || rec.IdNr || rec.IDNR,
                         cycle_startdate: rec.cycle_startdate,
                         cycle_enddate: rec.cycle_enddate,
-                        programme_code: rec.programme_code || rec.ProgrammeCode || rec.programme || rec.Programme,
+                        saqa_id: rec.saqa_id,
                         enrolled: rec.enrolled || rec.Enrolled || rec.enrolment || rec.Enrolment
                     };
 
@@ -402,7 +402,7 @@
                                     student_idnr: payload.idnr,
                                     cycle_startdate: payload.cycle_startdate,
                                     cycle_enddate: payload.cycle_enddate,
-                                    programme_code: payload.programme_code,
+                                    saqa_id: payload.saqa_id,
                                     enrolled: payload.enrolled,
                                     error_reason: data.reason || 'Unknown error',
                                     record_number: recordNumber
@@ -417,7 +417,7 @@
                                         conflicting_college: duplicate.college_name,
                                         cycle_startdate: duplicate.cycle_startdate,
                                         cycle_enddate: duplicate.cycle_enddate,
-                                        programme_code: duplicate.programme_code,
+                                        saqa_id: duplicate.saqa_id,
                                         enrolled_status: duplicate.enrolled === 1 ? 'Yes' : 'No',
                                         timestamp: new Date().toISOString()
                                     });
@@ -434,7 +434,7 @@
                                     student_idnr: payload.idnr,
                                     cycle_startdate: payload.cycle_startdate,
                                     cycle_enddate: payload.cycle_enddate,
-                                    programme_code: payload.programme_code,
+                                    saqa_id: payload.saqa_id,
                                     enrolled: payload.enrolled,
                                     error_reason: errorData.reason || `HTTP ${response.status}: ${response.statusText}`,
                                     record_number: recordNumber
@@ -444,7 +444,7 @@
                                     student_idnr: payload.idnr,
                                     cycle_startdate: payload.cycle_startdate,
                                     cycle_enddate: payload.cycle_enddate,
-                                    programme_code: payload.programme_code,
+                                    saqa_id: payload.saqa_id,
                                     enrolled: payload.enrolled,
                                     error_reason: `HTTP ${response.status}: ${response.statusText}`,
                                     record_number: recordNumber
@@ -457,7 +457,7 @@
                             student_idnr: payload.idnr,
                             cycle_startdate: payload.cycle_startdate,
                             cycle_enddate: payload.cycle_enddate,
-                            programme_code: payload.programme_code,
+                            saqa_id: payload.saqa_id,
                             enrolled: payload.enrolled,
                             error_reason: `Network error: ${err.message}`,
                             record_number: recordNumber
@@ -505,7 +505,7 @@
                                         <th>Conflicting College</th>
                                         <th>Cycle Start</th>
                                         <th>Cycle End</th>
-                                        <th>Programme Code</th>
+                                        <th>SAQA ID</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
@@ -517,7 +517,7 @@
                                             <td>${dup.conflicting_college}</td>
                                             <td>${dup.cycle_startdate}</td>
                                             <td>${dup.cycle_enddate}</td>
-                                            <td>${dup.programme_code}</td>
+                                            <td>${dup.saqa_id}</td>
                                             <td>${dup.enrolled_status}</td>
                                         </tr>
                                     `).join('')}
@@ -544,7 +544,7 @@
                                         <th>Student ID</th>
                                         <th>Cycle Start</th>
                                         <th>Cycle End</th>
-                                        <th>Programme Code</th>
+                                        <th>SAQA ID</th>
                                         <th>Enrolled</th>
                                         <th>Error Reason</th>
                                     </tr>
@@ -556,7 +556,7 @@
                                             <td>${err.student_idnr}</td>
                                             <td>${err.cycle_startdate}</td>
                                             <td>${err.cycle_enddate}</td>
-                                            <td>${err.programme_code}</td>
+                                            <td>${err.saqa_id}</td>
                                             <td>${err.enrolled}</td>
                                             <td>${err.error_reason}</td>
                                         </tr>

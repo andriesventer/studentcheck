@@ -27,7 +27,7 @@ Upserts a student enrolment and checks for cross-college duplicates.
   "idnr": "0401175048563",
   "cycle_startdate": "2025-01-01",
   "cycle_enddate": "2025-12-31",
-  "programme_code": "50203060",
+  "saqa_id": "50203060",
   "enrolled": "yes"
 }
 ```
@@ -44,7 +44,7 @@ Upserts a student enrolment and checks for cross-college duplicates.
       "idnr": "...",
       "cycle_startdate": "...",
       "cycle_enddate": "...",
-      "programme_code": "...",
+      "saqa_id": "...",
       "enrolled": 1
     }
   ]
@@ -83,7 +83,7 @@ Returns stored duplicate records for the session as JSON.
 Required headers (order matters for `import_csv.py`, flexible for `import.html`):
 
 ```csv
-cycle_startdate,cycle_enddate,idnr,programme_code,enrolled
+cycle_startdate,cycle_enddate,idnr,saqa_id,enrolled
 2025-01-01,2025-12-31,0401175048563,50203060,yes
 ```
 
