@@ -1,5 +1,21 @@
 # Todo
 
+## Clean up CyclesFact artefacts from DB
+
+**Goal:** The production DB has a leftover `cyclesfact` table and a `cycleid` column in `enrolments`. Remove them at startup; keep `cycle_startdate`/`cycle_enddate` in `enrolments`.
+
+- [x] In `migrate_db()`: drop `cyclesfact` table if it exists
+- [x] In `migrate_db()`: drop `cycleid` column from `enrolments` if it exists
+- [x] Ensure `cycle_startdate`/`cycle_enddate` ADD COLUMN guards remain (already there, just verify)
+
+## Review
+
+Added two cleanup steps to `migrate_db()` in `main.py`:
+- `ALTER TABLE enrolments DROP COLUMN cycleid` — removes the leftover FK column; wrapped in try/except so it's a no-op if the column doesn't exist.
+- `DROP TABLE IF EXISTS cyclesfact` — removes the leftover table; safe to re-run.
+
+Both run at every startup before the server accepts requests. No other code was changed.
+
 ## SQLite Performance: Indexes + WAL Mode
 
 - [x] Enable WAL mode on the SQLite engine

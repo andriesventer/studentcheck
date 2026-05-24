@@ -86,12 +86,25 @@ def create_indexes():
 
 def migrate_db():
     with engine.connect() as conn:
+        # Ensure date columns exist (legacy guard)
         for col in ("cycle_startdate", "cycle_enddate"):
             try:
                 conn.execute(text(f"ALTER TABLE enrolments ADD COLUMN {col} TEXT"))
                 conn.commit()
             except Exception:
                 pass
+        # Remove leftover cycleid column from enrolments if present
+        try:
+            conn.execute(text("ALTER TABLE enrolments DROP COLUMN cycleid"))
+            conn.commit()
+        except Exception:
+            pass
+        # Drop leftover cyclesfact table if present
+        try:
+            conn.execute(text("DROP TABLE IF EXISTS cyclesfact"))
+            conn.commit()
+        except Exception:
+            pass
 
 
 def get_session():
