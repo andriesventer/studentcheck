@@ -245,11 +245,11 @@
         function parseCSV(text) {
             const lines = text.trim().split('\n');
             const header = lines[0].split(',').map(h => h.trim().toLowerCase());
-            const requiredHeaders = ["cycle", "idnr", "programme_code", "enrolled"];
+            const requiredHeaders = ["cycle_startdate", "cycle_enddate", "idnr", "programme_code", "enrolled"];
             // Check header validity
             for (let h of requiredHeaders) {
                 if (!header.includes(h)) {
-                    throw new Error(`CSV header missing required field: "${h}". Required headers are: cycle,idnr,programme_code,enrolled`);
+                    throw new Error(`CSV header missing required field: "${h}". Required headers are: cycle_startdate,cycle_enddate,idnr,programme_code,enrolled`);
                 }
             }
             return lines.slice(1).map(line => {
@@ -376,7 +376,8 @@
                     // Prepare payload
                     const payload = {
                         idnr: rec.idnr || rec.IdNr || rec.IDNR,
-                        cycle_name: rec.cycle_name || rec.Cycle || rec.cycle || rec.CycleName,
+                        cycle_startdate: rec.cycle_startdate,
+                        cycle_enddate: rec.cycle_enddate,
                         programme_code: rec.programme_code || rec.ProgrammeCode || rec.programme || rec.Programme,
                         enrolled: rec.enrolled || rec.Enrolled || rec.enrolment || rec.Enrolment
                     };
@@ -399,7 +400,8 @@
                                 errorCount++;
                                 allErrorRecords.push({
                                     student_idnr: payload.idnr,
-                                    cycle_name: payload.cycle_name,
+                                    cycle_startdate: payload.cycle_startdate,
+                                    cycle_enddate: payload.cycle_enddate,
                                     programme_code: payload.programme_code,
                                     enrolled: payload.enrolled,
                                     error_reason: data.reason || 'Unknown error',
@@ -413,7 +415,8 @@
                                         student_idnr: payload.idnr,
                                         current_college: currentCollegeName,
                                         conflicting_college: duplicate.college_name,
-                                        cycle_name: duplicate.cycle_name,
+                                        cycle_startdate: duplicate.cycle_startdate,
+                                        cycle_enddate: duplicate.cycle_enddate,
                                         programme_code: duplicate.programme_code,
                                         enrolled_status: duplicate.enrolled === 1 ? 'Yes' : 'No',
                                         timestamp: new Date().toISOString()
@@ -429,7 +432,8 @@
                                 const errorData = await response.json();
                                 allErrorRecords.push({
                                     student_idnr: payload.idnr,
-                                    cycle_name: payload.cycle_name,
+                                    cycle_startdate: payload.cycle_startdate,
+                                    cycle_enddate: payload.cycle_enddate,
                                     programme_code: payload.programme_code,
                                     enrolled: payload.enrolled,
                                     error_reason: errorData.reason || `HTTP ${response.status}: ${response.statusText}`,
@@ -438,7 +442,8 @@
                             } catch {
                                 allErrorRecords.push({
                                     student_idnr: payload.idnr,
-                                    cycle_name: payload.cycle_name,
+                                    cycle_startdate: payload.cycle_startdate,
+                                    cycle_enddate: payload.cycle_enddate,
                                     programme_code: payload.programme_code,
                                     enrolled: payload.enrolled,
                                     error_reason: `HTTP ${response.status}: ${response.statusText}`,
@@ -450,7 +455,8 @@
                         errorCount++;
                         allErrorRecords.push({
                             student_idnr: payload.idnr,
-                            cycle_name: payload.cycle_name,
+                            cycle_startdate: payload.cycle_startdate,
+                            cycle_enddate: payload.cycle_enddate,
                             programme_code: payload.programme_code,
                             enrolled: payload.enrolled,
                             error_reason: `Network error: ${err.message}`,
@@ -497,7 +503,8 @@
                                         <th>Student ID</th>
                                         <th>Current College</th>
                                         <th>Conflicting College</th>
-                                        <th>Cycle</th>
+                                        <th>Cycle Start</th>
+                                        <th>Cycle End</th>
                                         <th>Programme Code</th>
                                         <th>Status</th>
                                     </tr>
@@ -508,7 +515,8 @@
                                             <td>${dup.student_idnr}</td>
                                             <td>${dup.current_college}</td>
                                             <td>${dup.conflicting_college}</td>
-                                            <td>${dup.cycle_name}</td>
+                                            <td>${dup.cycle_startdate}</td>
+                                            <td>${dup.cycle_enddate}</td>
                                             <td>${dup.programme_code}</td>
                                             <td>${dup.enrolled_status}</td>
                                         </tr>
@@ -534,7 +542,8 @@
                                     <tr>
                                         <th>Record #</th>
                                         <th>Student ID</th>
-                                        <th>Cycle</th>
+                                        <th>Cycle Start</th>
+                                        <th>Cycle End</th>
                                         <th>Programme Code</th>
                                         <th>Enrolled</th>
                                         <th>Error Reason</th>
@@ -545,7 +554,8 @@
                                         <tr>
                                             <td>${err.record_number}</td>
                                             <td>${err.student_idnr}</td>
-                                            <td>${err.cycle_name}</td>
+                                            <td>${err.cycle_startdate}</td>
+                                            <td>${err.cycle_enddate}</td>
                                             <td>${err.programme_code}</td>
                                             <td>${err.enrolled}</td>
                                             <td>${err.error_reason}</td>
