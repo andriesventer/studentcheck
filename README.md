@@ -85,7 +85,7 @@ Required headers (order matters for `import_csv.py`, flexible for `import.html`)
 
 ```csv
 cycle_startdate,cycle_enddate,idnr,saqa_id,enrolled
-2025-01-01,2025-12-31,0401175048563,50203060,yes
+2025-01-01,2025-12-31,0401175048563,90772,yes
 ```
 
 ## Production URL
