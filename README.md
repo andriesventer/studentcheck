@@ -60,7 +60,7 @@ On date validation failure:
 
 ### `GET /colleges`
 
-Returns all colleges (id, name, api_key). No auth required.
+Returns all colleges (id, name). No auth required.
 
 ### `GET /college`
 
