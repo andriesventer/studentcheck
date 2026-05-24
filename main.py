@@ -104,6 +104,12 @@ def migrate_db():
             conn.commit()
         except Exception:
             pass
+        # Rename programme_code column to saqa_id if still using old name
+        try:
+            conn.execute(text("ALTER TABLE enrolments RENAME COLUMN programme_code TO saqa_id"))
+            conn.commit()
+        except Exception:
+            pass
 
 
 def get_session():
