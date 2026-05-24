@@ -31,6 +31,7 @@ class Colleges(SQLModel, table=True):
     collegeid: int = Field(default=None, primary_key=True)
     college_name: str
     api_key: str
+    contact: str | None = None
 
 class CollegeOut(BaseModel):
     collegeid: int
@@ -107,6 +108,12 @@ def migrate_db():
         # Rename programme_code column to saqa_id if still using old name
         try:
             conn.execute(text("ALTER TABLE enrolments RENAME COLUMN programme_code TO saqa_id"))
+            conn.commit()
+        except Exception:
+            pass
+        # Add contact column to colleges if not present
+        try:
+            conn.execute(text("ALTER TABLE colleges ADD COLUMN contact TEXT"))
             conn.commit()
         except Exception:
             pass
@@ -187,6 +194,7 @@ async def enrolment_check(
     duplicate_query = (
         select(
             Colleges.college_name,
+            Colleges.contact,
             Enrolments.idnr,
             Enrolments.cycle_startdate,
             Enrolments.cycle_enddate,
@@ -215,7 +223,7 @@ async def enrolment_check(
             "status": "Updated",
             "enrolment": enrolment.dict(),
             "duplicated": duplicated,
-            "duplicates": [dict(zip(["college_name", "idnr", "cycle_startdate", "cycle_enddate", "saqa_id", "enrolled"], d)) for d in duplicates]
+            "duplicates": [dict(zip(["college_name", "contact", "idnr", "cycle_startdate", "cycle_enddate", "saqa_id", "enrolled"], d)) for d in duplicates]
         }
     else:
         new_enrolment = Enrolments(
@@ -234,7 +242,7 @@ async def enrolment_check(
             "status": "Added",
             "enrolment": new_enrolment,
             "duplicated": duplicated,
-            "duplicates": [dict(zip(["college_name", "idnr", "cycle_startdate", "cycle_enddate", "saqa_id", "enrolled"], d)) for d in duplicates]
+            "duplicates": [dict(zip(["college_name", "contact", "idnr", "cycle_startdate", "cycle_enddate", "saqa_id", "enrolled"], d)) for d in duplicates]
         }
 
 @app.get("/colleges", response_model=list[CollegeOut])

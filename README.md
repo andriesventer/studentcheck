@@ -41,6 +41,7 @@ Upserts a student enrolment and checks for cross-college duplicates.
   "duplicates": [
     {
       "college_name": "...",
+      "contact": "contact@othercollege.edu",
       "idnr": "...",
       "cycle_startdate": "...",
       "cycle_enddate": "...",
