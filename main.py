@@ -35,7 +35,6 @@ class Colleges(SQLModel, table=True):
 class CollegeOut(BaseModel):
     collegeid: int
     college_name: str
-    api_key: str
 
 class DuplicateRecord(BaseModel):
     student_idnr: str
