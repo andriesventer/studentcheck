@@ -28,24 +28,25 @@ The app serves the `import.html` UI at `/` and the API on the same port.
 Single-file FastAPI backend (`main.py`) with a SQLite database (`studentcheck.db`), and a standalone HTML/JS frontend (`import.html`) served at the root route.
 
 **Data model:**
-- `CyclesFact` — enrolment cycles (e.g. "2025 - Annual", "SEMESTER 1 - FULL TIME - 2025")
-- `Colleges` — colleges with their API keys (1–50 colleges hardcoded in `api_keys` dict)
-- `Enrolments` — per-college student enrolment records, keyed by `(collegeid, idnr, cycleid, programme_code)`
+- `Colleges` — colleges with their API keys (50 colleges, seeded manually)
+- `Enrolments` — per-college student enrolment records, keyed by `(collegeid, idnr, cycle_startdate, cycle_enddate, programme_code)`
 
-**Auth:** Hardcoded `api_keys` dict in `main.py` maps API key strings to college IDs (1–50). Every protected endpoint requires `X-API-Key` header. The API key determines which college the request belongs to — there is no other auth layer.
+**Auth:** API key is looked up in the `Colleges` table via `GET /college` — no hardcoded dict. Every protected endpoint requires `X-API-Key` header. The resolved `collegeid` determines which college the request belongs to.
 
 **Key flow — `/enrolment-check` (POST):**
-1. Resolve `collegeid` from API key
-2. Resolve `cycleid` from `cycle_name`
-3. Upsert the `Enrolments` row (insert or update with timestamp)
-4. Cross-college duplicate check: query for other colleges that have `enrolled=1` for the same `idnr`
+1. Resolve `collegeid` from API key (Colleges table lookup)
+2. Validate `cycle_startdate` and `cycle_enddate` are in `yyyy-mm-dd` format
+3. Upsert the `Enrolments` row (insert or update with GMT+2 timestamp)
+4. Cross-college duplicate check: query for other colleges that have `enrolled=1` for the same `idnr` with overlapping date range
 5. Return `{ status, enrolment, duplicated, duplicates[] }`
 
 **Duplicate records feature:** `/store-duplicates` and `/duplicates-csv` endpoints let the frontend accumulate duplicate records during a bulk import session (keyed by `session_id` query param) and export them as CSV. Storage is in-memory (`duplicate_records_storage` dict) — lost on server restart.
 
-**`import.html`:** Standalone single-page UI that accepts an API key and CSV file, processes rows client-side by calling `/enrolment-check` sequentially, tracks progress, and surfaces duplicates. The CSV format is: `cycle,idnr,programme_code,enrolled` (see `docs/sample_test.csv`).
+**`import.html`:** Standalone single-page UI that accepts an API key and CSV file, processes rows client-side by calling `/enrolment-check` sequentially, tracks progress, and surfaces duplicates and errors in separate tables after import. The production URL (`studdup.tvet.org.za`) is active; local dev URLs are commented out. CSV format: `cycle_startdate,cycle_enddate,idnr,programme_code,enrolled`.
 
-**`import_csv.py`:** CLI script alternative to the UI — reads `export.csv`, calls the production API endpoint, writes results to `results.txt`.
+**`import_csv.py`:** CLI script alternative to the UI — reads `export.csv` (columns: `cycle_startdate,cycle_enddate,idnr,programme_code,enrolled`), calls the production API endpoint, writes results to `results.txt`.
+
+**Performance:** SQLite runs in WAL mode (`journal_mode=WAL`, `synchronous=NORMAL`) for concurrent read/write during bulk imports. Three indexes are created at startup: `(idnr, enrolled)` for the duplicate scan, `(collegeid, idnr, cycle_startdate, cycle_enddate, programme_code)` for upsert lookups, and `(api_key)` on `Colleges` for auth.
 
 ## Deployment
 
@@ -55,7 +56,6 @@ The `.venv` directory is committed (Windows venv) — use `.venv\Scripts\activat
 
 ## Key Constraints
 
-- API keys are hardcoded in `main.py` — adding a new college requires adding to the `api_keys` dict and inserting a row in `Colleges`.
 - SQLite file (`studentcheck.db`) is local — not tracked in git (`.gitignore` excludes `*.db`).
 - Timestamps use GMT+2 (South African Standard Time) hardcoded as `timedelta(hours=2)`.
 - The `docs/` directory is gitignored — it holds sample CSVs and query files used for testing.
